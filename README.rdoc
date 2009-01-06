@@ -1,0 +1,1 @@
+= attr_remote - Painlessly integrate ActiveResource into ActiveRecord.
