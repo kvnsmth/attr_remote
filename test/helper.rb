@@ -29,6 +29,8 @@ ActiveResource::HttpMock.respond_to do |mock|
     'Location' => 'http://0.0.0.0:3000/users/1'
   }
   
+  mock.put "/users/1.xml", {}, '', 200, {}
+  
   # bob is not so lucky
   mock.post "/bobs.xml", 
             {}, 

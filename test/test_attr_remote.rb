@@ -35,6 +35,12 @@ class TestAttrRemote < Test::Unit::TestCase
       user = Factory.build(:user, :remote_user_id => 666, :name => nil)
       assert_equal '', user.name
     end
+    
+    test "that an attribute that is not readable returns an empty string" do
+      user = Factory(:user)
+      user = User.find(user.id)
+      assert_equal '', user.not_here
+    end
   end
   
   context "creation" do
@@ -66,6 +72,18 @@ class TestAttrRemote < Test::Unit::TestCase
   end
   
   context "updates" do
+    test "that an attribute change is propogated" do
+      user = Factory(:user)
+      user.name = "boo"
+      assert user.save
+      ActiveResource::HttpMock.respond_to do |mock|
+        mock.get "/users/1.xml", {}, {
+          :name => "boo"
+        }.to_xml(:root => "user")
+      end
+      user = User.find(user.id)
+      assert_equal "boo", user.name
+    end
   end
   
   context "deletes" do

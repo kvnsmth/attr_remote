@@ -64,6 +64,55 @@ module AttrRemote
         
       # def validate_remote_user_on_create; end  
         def validate_#{remote_instance_meth}_on_create; end
+        
+      # before_update :update_remote_user  
+        before_update :update_#{remote_instance_meth}
+        
+      # def update_remote_user
+      #   if self.remote_user_id
+      #     remote_hash = {}
+      #     self.class.remote_attributes.each do |attr|
+      #       remote_hash[attr.to_sym] = self.send(attr.to_sym)
+      #     end
+      #     remote_user.load(remote_hash)
+      #     remote_user.save
+      #     
+      #     unless @#{remote_instance_meth}.valid?
+      #       remote_user.errors.each do |attr, err|
+      #         errors.add(attr, err)
+      #       end
+      #       return false
+      #     else
+      #       return true
+      #     end
+      #   end
+      # end
+        def update_#{remote_instance_meth}
+          if self.#{remote_instance_id}
+            remote_hash = {}
+            self.class.remote_attributes.each do |attr|
+              remote_hash[attr.to_sym] = self.send(attr.to_sym)
+            end
+            #{remote_instance_meth}.load(remote_hash)
+            #{remote_instance_meth}.save
+            
+            unless @#{remote_instance_meth}.valid?
+              #{remote_instance_meth}.errors.each do |attr, err|
+                errors.add(attr, err)
+              end
+              return false
+            else
+              return true
+            end
+          end
+        end
+        private :update_#{remote_instance_meth}
+        
+      # validate_on_update :validate_remote_user_on_update
+        validate_on_update :validate_#{remote_instance_meth}_on_update
+        
+      # def validate_remote_user_on_update; end  
+        def validate_#{remote_instance_meth}_on_update; end
       remote_access
     
       @remote_attributes = remote_attrs
@@ -79,7 +128,7 @@ module AttrRemote
             elsif self.#{remote_instance_meth}    #   elsif self.remote_user
               @#{attr} = self.                    #     @username = self.
                          #{remote_instance_meth}. #                 remote_user.
-                         #{attr}                  #                 username
+                         #{attr} rescue nil       #                 username rescue nil
             else                                  #   else
               nil                                 #     nil
             end                                   #   end
