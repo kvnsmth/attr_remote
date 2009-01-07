@@ -5,6 +5,13 @@ class TestAttrRemote < Test::Unit::TestCase
     test "that attributes can be added multiple times" do
       assert_equal User.remote_attributes, [:name, :not_here]
     end
+    
+    test "that a remote hit isn't attempted if the local remote id is nil" do
+      user = User.new
+      assert_nil user.remote_user_id
+      assert_nil user.remote_user
+      assert_equal "", user.name
+    end
   end
   
   context "remote object access" do

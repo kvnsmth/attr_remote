@@ -18,10 +18,22 @@ module AttrRemote
     
       class_eval <<-remote_access, __FILE__, __LINE__+1
   # def remote_user
-  #   @remote_user ||= RemoteUser.find(self.remote_user_id) rescue nil
+  #   if @remote_user
+  #     @remote_user
+  #   elsif self.remote_user_id
+  #     @remote_user = RemoteUser.find(self.remote_user_id) rescue nil
+  #   else
+  #     nil
+  #   end
   # end
     def #{remote_instance_meth}
-      @#{remote_instance_meth} ||= #{remote_class}.find(self.#{remote_instance_id}) rescue nil
+      if @#{remote_instance_meth}
+        @#{remote_instance_meth}
+      elsif self.#{remote_instance_id}
+        @#{remote_instance_meth} = #{remote_class}.find(self.#{remote_instance_id}) rescue nil
+      else
+        nil
+      end
     end
   
   # before_create :create_remote_user
