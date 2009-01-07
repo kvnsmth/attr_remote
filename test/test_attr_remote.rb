@@ -1,6 +1,12 @@
 require File.dirname(__FILE__) + '/helper'
 
 class TestAttrRemote < Test::Unit::TestCase
+  context "general specs" do
+    test "that attributes can be added multiple times" do
+      assert_equal User.remote_attributes, [:name, :not_here]
+    end
+  end
+  
   context "remote object access" do
     before do
       @user = Factory(:user)
@@ -72,7 +78,7 @@ class TestAttrRemote < Test::Unit::TestCase
   end
   
   context "updates" do
-    test "that an attribute change is propogated" do
+    test "that a remote attribute change is propogated" do
       user = Factory(:user)
       user.name = "boo"
       assert user.save
@@ -83,6 +89,13 @@ class TestAttrRemote < Test::Unit::TestCase
       end
       user = User.find(user.id)
       assert_equal "boo", user.name
+    end
+    
+    test "that save doesn't cause a remote hit if a remote attribute has not been changed" do
+      user = Factory(:user, :remote_user_id => 2)
+      # purposely not mocking the ARes call to "prove" 
+      # that it isn't invoked son save
+      assert user.save
     end
   end
   
