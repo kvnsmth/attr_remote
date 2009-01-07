@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "attr_remote"
-  s.version  = "0.0.5"
+  s.version  = "0.0.6"
   s.date     = "2008-01-06"
   s.summary  = "Painlessly integrate ActiveResource into ActiveRecord."
   s.email    = "smithk14@gmail.com"
