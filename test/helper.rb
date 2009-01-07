@@ -17,29 +17,18 @@ ActiveRecord::Base.establish_connection({
   :dbfile => File.dirname(__FILE__) + '/db/test.db'
 })
 
-ActiveResource::HttpMock.respond_to do |mock|
-  # user is a successful creation
-  mock.get "/users/1.xml", {}, {
-    :name => "Kevin"
-  }.to_xml(:root => "user")
-  
-  mock.post "/users.xml", {}, {
-    :name => "Kevin"
-  }.to_xml(:root => "user"), 200, {
-    'Location' => 'http://0.0.0.0:3000/users/1'
-  }
-  
-  mock.put "/users/1.xml", {}, '', 200, {}
-  
-  # bob is not so lucky
-  mock.post "/bobs.xml", 
-            {}, 
-            returning(ActiveRecord::Errors.new(Bob.new)) { |errors|
-              errors.add(:email, "can't be blank")
-            }.to_xml, 422
-end
-
 class Test::Unit::TestCase
+  def mock_user(user)
+    ActiveResource::HttpMock.respond_to do |mock|
+      mock.get "/users/#{user.remote_user_id}.xml", {}, {
+        :id => user.remote_user_id,
+        :name => user.name
+      }.to_xml(:root => "user")
+      mock.put "/users/#{user.remote_user_id}.xml", {}, '', 200, {}
+    end
+  end
+  
+  
   def teardown
     # cleanup all our test data
     User.delete_all

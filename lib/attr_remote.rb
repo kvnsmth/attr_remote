@@ -4,12 +4,9 @@ require 'active_resource'
 
 module AttrRemote
   module ClassMethods
+    
     def remote_attributes
       @remote_attributes ||= []
-    end
-    
-    def remote_changed?
-      @remote_changed == true
     end
     
     def attr_remote(*remote_attrs)
@@ -19,7 +16,7 @@ module AttrRemote
       
       remote_attributes.concat(remote_attrs).uniq!
     
-      class_eval <<-remote_access
+      class_eval <<-remote_access, __FILE__, __LINE__+1
   # def remote_user
   #   @remote_user ||= RemoteUser.find(self.remote_user_id) rescue nil
   # end
@@ -79,7 +76,7 @@ module AttrRemote
     before_update :update_#{remote_instance_meth}
     
   # def update_remote_user
-  #   if self.remote_user_id and self.class.remote_changed?
+  #   if self.remote_user_id and self.remote_attributes_changed?
   #     remote_hash = {}
   #     self.class.remote_attributes.each do |attr|
   #       remote_hash[attr.to_sym] = self.send(attr.to_sym)
@@ -93,13 +90,13 @@ module AttrRemote
   #       end
   #       return false
   #     else
-  #       @remote_changed = false
+  #       @remote_attributes_changed = false
   #       return true
   #     end
   #   end
   # end
     def update_#{remote_instance_meth}
-      if self.#{remote_instance_id} and self.class.remote_changed?
+      if self.#{remote_instance_id} and self.remote_attributes_changed?
         remote_hash = {}
         self.class.remote_attributes.each do |attr|
           remote_hash[attr.to_sym] = self.send(attr.to_sym)
@@ -113,7 +110,7 @@ module AttrRemote
           end
           return false
         else
-          @remote_changed = false
+          @remote_attributes_changed = false
           return true
         end
       end
@@ -128,7 +125,7 @@ module AttrRemote
 remote_access
 
       remote_attributes.each do |attr|      
-        class_eval <<-remote_attribute
+        class_eval <<-remote_attribute, __FILE__, __LINE__+1
   def #{attr}                             # def username
     remote_#{attr} || ''                  #   remote_username || ''
   end                                     # end
@@ -147,12 +144,36 @@ remote_access
 
   def #{attr}=(attr_value)                # def username=(attr_value)
     @#{attr} = attr_value                 #   @username = attr_value
-    @remote_changed = true                #   @remote_changed = true
+    @remote_attributes_changed = true     #   @remote_attributes_changed = true
   end                                     # end
 remote_attribute
       end
     end
   end
+  
+  module InstanceMethods
+    def self.included(base)
+      base.alias_method_chain :save, :dirty_remote
+      base.alias_method_chain :save!, :dirty_remote
+    end
+    
+    def remote_attributes_changed?
+      @remote_attributes_changed == true
+    end
+    
+    def save_with_dirty_remote(*args) #:nodoc:
+      if status = save_without_dirty_remote(*args)
+        @remote_attributes_changed = false
+      end
+      status
+    end
+    def save_with_dirty_remote!(*args) #:nodoc:
+      status = save_without_dirty_remote!(*args)
+      @remote_attributes_changed = false
+      status
+    end
+  end
 end
 
 ActiveRecord::Base.extend AttrRemote::ClassMethods
+ActiveRecord::Base.send(:include, AttrRemote::InstanceMethods)
