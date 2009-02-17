@@ -1,1 +1,69 @@
 = attr_remote - Painlessly integrate ActiveResource into ActiveRecord.
+
+== Why?
+
+ActiveResource is cool, but it's is a pain to integrate with ActiveRecord. Want to have_many :my_active_resource? Nope. Also, you can't front any ActiveResource classes with a form. Want to use form_for? Sorry. Want validations? No dice.
+
+== How does attr_remote help?
+
+It allows you to hide an ActiveResource behind ActiveRecord, which means you can (sort of) have all the things you want, but can't with vanilla ActiveResource. Essentially, ActiveRecord becomes a proxy for ActiveResource.
+
+== Okay, show me some code.
+
+    # attr_remote requires an integer attribute remote_<class>_id for 
+    # the local ActiveRecord to store the ActiveResource ID
+    #
+    # For instance,
+    #
+    # create_table :users do |t|
+    #   t.integer :remote_user_id
+    #   t.integer :group_id
+    # end
+    class User
+      attr_remote :first_name, :last_name, :email, :password
+    
+      belongs_to :group
+      has_many :posts
+  
+  
+      validates_length_of :first_name, :within => 1..30
+      validates_length_of :last_name, :within => 1..30
+      validates_presence_of :email
+      validates_presence_of :password, :on => :create
+    end
+  
+    # The configuration behind the scenes:
+    #
+    # attr_remote assumes that there is an ActiveResource class 
+    # with a Remote prefix
+    class RemoteUser < ActiveResource::Base
+      self.site = "https://myservice.com/"
+      self.element_name = "user"
+    end
+
+With the above code, you can now CRUD (well, not delete yet) a User, and it will do all the right stuff behind the scenes with the remote resource. It even caches the remote instance the first time a remote attribute is read.
+
+Want to use form_for? No problem. It works since you're really interacting with ActiveRecord and _not_ ActiveResource. Cool. Validations? Yep. Just don't do validates_uniqueness_of. :)
+
+== Install
+    
+    $ gem sources -a http://gems.github.com
+    $ sudo gem install codebrulee-attr_remote
+
+== Any issues/TODOs?
+
+* Delete isn't implemented yet.
+* No support for validates_uniqueness_of.
+* attr_remote declarations create a reader and writer. There isn't support for just reading or writing.
+* Not all of the ActiveRecord methods do what you might expect. For instance, ActiveRecord::Base#reload doesn't delegate to ActiveResource yet, which means the locally cached instance isn't reloaded.
+* Hook the caching into something like ActiveSupport::Cache::Store
+
+== License
+
+(The MIT License)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the ‘Software’), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
